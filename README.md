@@ -149,7 +149,7 @@ This section documents the purpose and behavior of every function (and class met
 ---
 
 ## 1. `app.py` (Flask routes / controller)
-Link: https://github.com/anamahmedshamsi12/REPO_NAME/blob/main/app.py
+Link: https://github.com/Fa25-CS5001-Online-Lionelle/finalproject-anamahmedshamsi12/blob/main/src/app.py
 
 `app.py` is the controller layer. It handles routing, reads form inputs, writes/reads session state, and delegates simulation logic to the simulation module.
 
@@ -200,7 +200,7 @@ def reset():
 >Clears all session data and returns the user to the main menu. This ensures a clean restart without leftover state
 
 ## `2. simulation.py` 
-Link: https://github.com/anamahmedshamsi12/REPO_NAME_HERE/blob/main/simulation.py
+Link: https://github.com/Fa25-CS5001-Online-Lionelle/finalproject-anamahmedshamsi12/blob/main/src/simulation.py
 
 The `simulation.py` file contains the core logic of the Life Metrics Simulator. It is responsible for modeling how decisions affect life metrics, how simulated time progresses, how user actions are logged, and how higher-level summaries such as overall scores and trends are computed. 
 
@@ -309,7 +309,7 @@ def recursive_metric_trend(log_entries, metric, index=0):
 >**This function demonstrates recursion with a clear base case and recursive case, as well as sequential processing of time-based data.**
 
 ## 3. `metrics.py`
-Link: https://github.com/anamahmedshamsi12/REPO_NAME_HERE/blob/main/metrics.py
+Link: https://github.com/Fa25-CS5001-Online-Lionelle/finalproject-anamahmedshamsi12/blob/main/src/metrics.py
 
 The metrics.py file contains helper functions that operate directly on the simulation’s metric data. Its purpose is to centralize logic related to initializing metrics, applying changes, and computing summaries, allowing the simulation and routing layers to remain focused on control flow rather than low-level data manipulation.
 
@@ -366,7 +366,7 @@ def average_score(metrics):
 >**This demonstrates aggregation, defensive conditionals to prevent division errors, and numeric computation using dictionary values.**
 
 ## 4. `sessions.py`
-Link: https://github.com/anamahmedshamsi12/REPO_NAME_HERE/blob/main/sessions.py
+Link: https://github.com/Fa25-CS5001-Online-Lionelle/finalproject-anamahmedshamsi12/blob/main/src/sessions.py
 
 The sessions.py file defines a session abstraction that represents a single run of the Life Metrics Simulator. It encapsulates mutable simulation state such as the current day, metric values, and log history. By grouping related state and behavior into a session object, the project demonstrates clear organization and controlled state management.
 
@@ -433,7 +433,7 @@ def add_log_entry(self, note, mood):
 >**This demonstrates lists of dictionaries, appending structured data, and maintaining a history of user actions.**
 
 ## 5. `profiles.py`
-Link: https://github.com/anamahmedshamsi12/REPO_NAME_HERE/blob/main/profiles.py
+Link: https://github.com/Fa25-CS5001-Online-Lionelle/finalproject-anamahmedshamsi12/blob/main/src/profiles.py
 
 The `profiles.py` ile defines the configuration for each simulation mode, including Student, Professional, and Custom profiles. Rather than hard-coding behavior throughout the program, this file centralizes profile-related data and structure, allowing the simulation logic to remain generic and extensible. Each profile acts as a blueprint that specifies initial metric values and descriptive metadata.
 
@@ -501,7 +501,7 @@ def build_custom_profile(metric_names, activity_labels):
 >**This demonstrates list comprehensions, loops, conditionals, dictionary construction, and robust handling of user-defined input.**
 
 ## 6. `scenarios.py`
-Link: https://github.com/anamahmedshamsi12/REPO_NAME_HERE/blob/main/scenarios.py
+Link: https://github.com/Fa25-CS5001-Online-Lionelle/finalproject-anamahmedshamsi12/blob/main/src/scenarios.py
 
 The `scenarios.py` file defines the library of decisions available in each simulation mode. Rather than encoding decision logic directly into functions, this file uses a data-driven approach in which each scenario is represented as structured data. This allows the simulation engine to remain generic while supporting different modes and behaviors through configuration alone.
 
@@ -572,10 +572,10 @@ if scenario["id"] == selected_id:
 ```
 >**This demonstrates string comparison, conditional logic, and the use of identifiers to maintain consistency across program components.**
 
-## 7. `tests.py`
-Link: https://github.com/anamahmedshamsi12/REPO_NAME_HERE/blob/main/tests.py
+## 7. `tests_life_metrics.py`
+Link: https://github.com/Fa25-CS5001-Online-Lionelle/finalproject-anamahmedshamsi12/blob/main/src/test_life_metrics.py
 
-The `tests.py` file contains automated unit tests used to verify the correctness of the simulation logic. Rather than relying only on manual testing through the web interface, these tests validate that key functions behave as expected, including edge cases such as out-of-range values, empty inputs, and invalid scenario selections. This makes it easy to demonstrate that the project was tested systematically prior to submission.
+The `tests_life_metrics.py` file contains automated unit tests used to verify the correctness of the simulation logic. Rather than relying only on manual testing through the web interface, these tests validate that key functions behave as expected, including edge cases such as out-of-range values, empty inputs, and invalid scenario selections. This makes it easy to demonstrate that the project was tested systematically prior to submission.
 
 **CS5001 concepts:** The concepts demonstrated in this file include unit testing, functions, conditionals, dictionaries, lists, edge case analysis, and verification of invariants.
 
