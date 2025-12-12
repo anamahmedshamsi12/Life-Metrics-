@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Life Metrics · Simulation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --bg-gradient-top: #eef2ff;
+        --bg-gradient-bottom: #e0f7f3;
+        --card-bg: rgba(255, 255, 255, 0.96);
+        --border-subtle: rgba(148, 163, 184, 0.5);
+        --text-main: #0f172a;
+        --text-muted: #6b7280;
+        --accent-peri: #4f46e5;
+        --accent-teal: #0d9488;
+        --metric-low: #f97373;
+        --metric-mid: #facc15;
+        --metric-high: #22c55e;
+        --shadow-soft: 0 14px 40px rgba(15, 23, 42, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: radial-gradient(circle at top left, #e0f2fe, #eef2ff 32%)
+            no-repeat,
+          radial-gradient(circle at bottom right, #ccfbf1, #eff6ff 40%)
+            no-repeat;
+        color: var(--text-main);
+      }
+
+      .page {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 24px 18px 32px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .brand-title {
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        color: #1e293b;
+      }
+
+      .brand-subtitle {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+
+      .back-button {
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.65);
+        background: rgba(248, 250, 252, 0.9);
+        font-size: 0.82rem;
+        color: #0f172a;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: background 0.12s ease, border-color 0.12s ease,
+          transform 0.1s ease, box-shadow 0.1s ease;
+      }
+
+      .back-button:hover {
+        background: #ffffff;
+        border-color: rgba(148, 163, 184, 0.9);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+        transform: translateY(-0.5px);
+      }
+
+      .back-button span:first-child {
+        font-size: 1rem;
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+        gap: 22px;
+      }
+
+      @media (max-width: 900px) {
+        main {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      .panel {
+        background: var(--card-bg);
+        border-radius: 26px;
+        padding: 20px 20px 18px;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        backdrop-filter: blur(10px);
+      }
+
+      .panel-header-kicker {
+        font-size: 0.78rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #818cf8;
+        margin-bottom: 4px;
+      }
+
+      .panel-title-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .panel-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+      }
+
+      .panel-tag {
+        font-size: 0.78rem;
+        padding: 3px 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        background: rgba(248, 250, 252, 0.9);
+        color: #334155;
+      }
+
+      .panel-sub {
+        font-size: 0.86rem;
+        color: var(--text-muted);
+        margin-top: 6px;
+        line-height: 1.5;
+      }
+
+      .time-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        background: linear-gradient(90deg, #4f46e5, #0ea5e9);
+        color: white;
+        margin-top: 10px;
+      }
+
+      .time-pill-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .score-chip {
+        margin-top: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        background: rgba(16, 185, 129, 0.06);
+        color: #047857;
+        border: 1px solid rgba(45, 212, 191, 0.26);
+      }
+
+      .metrics-list {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .metric-row {
+        padding: 8px 8px 6px;
+        border-radius: 12px;
+        background: rgba(248, 250, 252, 0.9);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+      }
+
+      .metric-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 4px;
+      }
+
+      .metric-name {
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .metric-value {
+        font-size: 0.82rem;
+        color: #4b5563;
+      }
+
+      .metric-bar-track {
+        width: 100%;
+        height: 7px;
+        border-radius: 999px;
+        background: rgba(226, 232, 240, 0.9);
+        overflow: hidden;
+      }
+
+      .metric-bar {
+        height: 100%;
+        border-radius: inherit;
+        transition: width 0.25s ease;
+      }
+
+      .metric-bar--low {
+        background: var(--metric-low);
+      }
+
+      .metric-bar--mid {
+        background: var(--metric-mid);
+      }
+
+      .metric-bar--high {
+        background: var(--metric-high);
+      }
+
+      .metric-trend {
+        margin-top: 3px;
+        font-size: 0.76rem;
+        color: #6b7280;
+      }
+
+      .metric-trend span {
+        font-weight: 600;
+      }
+
+      .metric-trend--up span {
+        color: #16a34a;
+      }
+
+      .metric-trend--down span {
+        color: #dc2626;
+      }
+
+      .metric-trend--flat span {
+        color: #6b7280;
+      }
+
+      .trend-note {
+        margin-top: 10px;
+        font-size: 0.78rem;
+        color: #9ca3af;
+      }
+
+      .panel-footer-links {
+        margin-top: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .panel-footer-links a {
+        font-size: 0.8rem;
+        color: #64748b;
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      .panel-footer-note {
+        font-size: 0.78rem;
+        color: #9ca3af;
+      }
+
+      /* Right panel – actions / notes */
+
+      .section-title {
+        font-size: 0.78rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #818cf8;
+        margin-bottom: 4px;
+      }
+
+      .section-heading {
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+
+      .section-desc {
+        font-size: 0.86rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+        line-height: 1.5;
+      }
+
+      .checkin-form {
+        margin-top: 14px;
+      }
+
+      .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+      }
+
+      .action-card-button {
+        border: none;
+        text-align: left;
+        padding: 14px 14px 12px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12);
+        cursor: pointer;
+        transition: transform 0.12s ease, box-shadow 0.12s ease,
+          background 0.12s ease;
+      }
+
+      .action-card-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.18);
+        background: #ffffff;
+      }
+
+      .action-title {
+        font-size: 0.96rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 3px;
+      }
+
+      .action-subtitle {
+        font-size: 0.82rem;
+        color: #4b5563;
+        margin-bottom: 3px;
+      }
+
+      .action-desc {
+        font-size: 0.8rem;
+        color: #6b7280;
+      }
+
+      .note-block {
+        margin-top: 16px;
+      }
+
+      .field-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #4b5563;
+        margin-bottom: 4px;
+        display: block;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 70px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.7);
+        padding: 8px 10px;
+        font-size: 0.88rem;
+        resize: vertical;
+        font-family: inherit;
+      }
+
+      textarea:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.5);
+      }
+
+      /* Log section */
+
+      .log-panel {
+        margin-top: 22px;
+        background: rgba(248, 250, 252, 0.9);
+        border-radius: 22px;
+        padding: 16px 16px 14px;
+        border: 1px dashed rgba(148, 163, 184, 0.8);
+      }
+
+      .log-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .log-title {
+        font-size: 0.96rem;
+        font-weight: 600;
+      }
+
+      .log-sub {
+        font-size: 0.8rem;
+        color: #6b7280;
+      }
+
+      .log-empty {
+        margin-top: 8px;
+        font-size: 0.82rem;
+        color: #9ca3af;
+      }
+
+      .log-list {
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 280px;
+        overflow-y: auto;
+      }
+
+      .log-item {
+        padding: 8px 9px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+      }
+
+      .log-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 6px;
+      }
+
+      .log-meta-left {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .log-badge {
+        font-size: 0.76rem;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: rgba(239, 246, 255, 0.9);
+        color: #1d4ed8;
+      }
+
+      .log-time {
+        font-size: 0.76rem;
+        color: #64748b;
+      }
+
+      .log-action {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #0f172a;
+      }
+
+      .log-note {
+        margin-top: 4px;
+        font-size: 0.8rem;
+        color: #4b5563;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <header>
+        <div class="brand">
+          <div class="brand-title">Life Metrics</div>
+          <div class="brand-subtitle">Interactive life tradeoff simulator</div>
+        </div>
+        <a href="{{ url_for('reset') }}" class="back-button">
+          <span>←</span>
+          <span>Back to modes</span>
+        </a>
+      </header>
+
+      <main>
+        <!-- Left panel: metrics and trends -->
+        <section class="panel">
+          <div class="panel-header-kicker">Current snapshot</div>
+          <div class="panel-title-row">
+            <div class="panel-title">
+              Day {{ day }}, {{ time_label }} check-in
+            </div>
+            <div class="panel-tag">
+              Mode:
+              {% if mode == "student" %}
+                Student Life
+              {% elif mode == "professional" %}
+                Professional Life
+              {% else %}
+                Custom Life
+              {% endif %}
+            </div>
+          </div>
+
+          <p class="panel-sub">
+            You are on check-in {{ check_in }} of {{ total_check_ins }} today.
+            Each choice below adjusts your metrics slightly and will be reflected
+            in this dashboard.
+          </p>
+
+          <div class="time-pill">
+            <span class="time-pill-dot"></span>
+            <span>
+              {{ time_label }} · overall score:
+              <strong>{{ score }}</strong>
+            </span>
+          </div>
+
+          <div class="metrics-list">
+            {% for name, value in metrics.items() %}
+              {% set trend = trend_summary.get(name) if trend_summary else none %}
+              {% if value < 50 %}
+                {% set bar_class = "metric-bar metric-bar--low" %}
+              {% elif value < 70 %}
+                {% set bar_class = "metric-bar metric-bar--mid" %}
+              {% else %}
+                {% set bar_class = "metric-bar metric-bar--high" %}
+              {% endif %}
+
+              {% if trend is not none and trend > 0 %}
+                {% set trend_class = "metric-trend metric-trend--up" %}
+                {% set trend_label = "↑ +" ~ trend %}
+              {% elif trend is not none and trend < 0 %}
+                {% set trend_class = "metric-trend metric-trend--down" %}
+                {% set trend_label = "↓ " ~ trend %}
+              {% elif trend is not none %}
+                {% set trend_class = "metric-trend metric-trend--flat" %}
+                {% set trend_label = "→ 0" %}
+              {% else %}
+                {% set trend_class = "metric-trend" %}
+                {% set trend_label = none %}
+              {% endif %}
+
+              <div class="metric-row">
+                <div class="metric-header">
+                  <span class="metric-name">{{ name }}</span>
+                  <span class="metric-value">{{ value }}%</span>
+                </div>
+                <div class="metric-bar-track">
+                  <div
+                    class="{{ bar_class }}"
+                    style="width: {{ value }}%;"
+                  ></div>
+                </div>
+                {% if trend_label %}
+                  <div class="{{ trend_class }}">
+                    <span>{{ trend_label }}</span>
+                    &nbsp;over all logged check-ins.
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+
+          <p class="trend-note">
+            Metrics in red are under 50% and may need attention. Yellow indicates
+            a mixed area (50–69%), and green metrics (70%+) are currently in a
+            healthier range.
+          </p>
+
+          <div class="panel-footer-links">
+            <div class="panel-footer-note">
+              All values reset if you go back to the main menu.
+            </div>
+            <a href="{{ url_for('simulate') }}">
+              Refresh view
+            </a>
+          </div>
+        </section>
+
+        <!-- Right panel: choices and notes -->
+        <section class="panel">
+          {% if mode == "custom" %}
+            <div class="section-title">Step 3 · Check-in</div>
+            <h2 class="section-heading">How did this part of your day feel?</h2>
+            <p class="section-desc">
+              Choose one option that best matches this check-in.
+              The simulator treats these as presets:
+              <strong>day felt great overall</strong>,
+              <strong>day was mixed / okay</strong>, or
+              <strong>day felt draining</strong>.
+            </p>
+            <p class="section-desc">
+              Behind the scenes, these presets gently nudge all of your custom
+              metrics up or down, instead of asking you to enter every small
+              decision.
+            </p>
+          {% else %}
+            <div class="section-title">Step 3 · Check-in</div>
+            <h2 class="section-heading">What did you decide to do?</h2>
+            <p class="section-desc">
+              Pick the scenario that best describes what you did during this
+              time of day. Each option represents a realistic tradeoff between
+              work, rest, and relationships, and will update your metrics.
+            </p>
+          {% endif %}
+
+          <form
+            method="post"
+            action="{{ url_for('simulate') }}"
+            class="checkin-form"
+          >
+            <div class="actions-grid">
+              {% for action in actions %}
+                <button
+                  type="submit"
+                  name="action_id"
+                  value="{{ action['id'] }}"
+                  class="action-card-button"
+                >
+                  <div class="action-title">{{ action["label"] }}</div>
+
+                  {% if mode == "custom" %}
+                    <div class="action-subtitle">
+                      {% if action["id"] == "strong_day" %}
+                        Day felt great overall — high momentum and mostly
+                        positive.
+                      {% elif action["id"] == "steady_day" %}
+                        Day was mixed / okay — some wins, some tradeoffs.
+                      {% elif action["id"] == "tough_day" %}
+                        Day felt draining — more depleting than recharging.
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% if action["description"] %}
+                    <div class="action-desc">
+                      {{ action["description"] }}
+                    </div>
+                  {% endif %}
+                </button>
+              {% endfor %}
+            </div>
+
+            <div class="note-block">
+              <label for="note" class="field-label">
+                Optional reflection for this check-in
+              </label>
+              <textarea
+                id="note"
+                name="note"
+                placeholder="e.g., why you chose this option or what actually happened during this part of the day."
+              ></textarea>
+            </div>
+          </form>
+
+          <div class="log-panel">
+            <div class="log-header-row">
+              <div class="log-title">Recent check-ins</div>
+              <div class="log-sub">
+                A brief history of what you have chosen so far.
+              </div>
+            </div>
+
+            {% if not log %}
+              <div class="log-empty">
+                No check-ins yet. Once you make your first choice, a history of
+                your decisions will appear here.
+              </div>
+            {% else %}
+              <div class="log-list">
+                {% for entry in log|reverse %}
+                  <div class="log-item">
+                    <div class="log-meta">
+                      <div class="log-meta-left">
+                        <div class="log-badge">
+                          Day {{ entry["day"] }} · {{ entry["time_label"] }}
+                        </div>
+                        <div class="log-time">
+                          Check-in {{ entry["moment"] }}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="log-action">
+                      {{ entry["action_label"] }}
+                    </div>
+                    {% if entry["note"] %}
+                      <div class="log-note">
+                        {{ entry["note"] }}
+                      </div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+
+
