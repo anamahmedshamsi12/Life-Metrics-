@@ -1,14 +1,17 @@
+import metrics    # type: ignore
+import simulation  # type: ignore
+from typing import Dict, Any, List
 import unittest
 import sys
 import os
 
 # Make sure Python can import from ../src just like the example test file
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-
-from typing import Dict, Any, List
-
-import simulation  # type: ignore
-import metrics    # type: ignore
+sys.path.insert(
+    0,
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            "../src")))
 
 
 class TestLifeMetrics(unittest.TestCase):
@@ -216,7 +219,9 @@ class TestLifeMetrics(unittest.TestCase):
         self.assertEqual(len(new_log), 1)
         entry = new_log[0]
         self.assertEqual(entry["day"], 1)
-        self.assertEqual(entry["time_label"], simulation.TIME_SLOTS[moment_index])
+        self.assertEqual(
+            entry["time_label"],
+            simulation.TIME_SLOTS[moment_index])
         self.assertEqual(entry["note"], note)
 
         # Time moves from Morning (0) to the next slot

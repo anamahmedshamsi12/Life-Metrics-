@@ -254,4 +254,3 @@ class Session:
                 "mood": mood,
             }
         )
-

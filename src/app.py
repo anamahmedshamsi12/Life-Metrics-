@@ -11,7 +11,8 @@ This separation helps keep the code organized and readable by isolating
 program logic from user interface and routing concerns.
 
 """
-# Import Flask and utilities for handling requests, redirects, templates, and sessions
+# Import Flask and utilities for handling requests, redirects, templates,
+# and sessions
 from flask import Flask, render_template, request, redirect, url_for, session
 
 # Import all simulation logic from the simulation module
@@ -189,19 +190,22 @@ def custom_setup():
         ]
 
         # Read the custom action labels and descriptions, applying defaults
-        strong_label = request.form.get("strong_label", "").strip() or "High-momentum day"
+        strong_label = request.form.get(
+            "strong_label", "").strip() or "High-momentum day"
         strong_desc = (
             request.form.get("strong_desc", "").strip()
             or "You felt focused, aligned, and made real progress."
         )
 
-        steady_label = request.form.get("steady_label", "").strip() or "Steady day"
+        steady_label = request.form.get(
+            "steady_label", "").strip() or "Steady day"
         steady_desc = (
             request.form.get("steady_desc", "").strip()
             or "A normal day with small wins and some tradeoffs."
         )
 
-        tough_label = request.form.get("tough_label", "").strip() or "Tough day"
+        tough_label = request.form.get(
+            "tough_label", "").strip() or "Tough day"
         tough_desc = (
             request.form.get("tough_desc", "").strip()
             or "A day that left you more depleted than recharged."
@@ -342,7 +346,8 @@ def simulate():
             )
 
     # Load custom metric labels if in custom mode
-    custom_metrics = session.get("custom_metrics") if mode == "custom" else None
+    custom_metrics = session.get(
+        "custom_metrics") if mode == "custom" else None
 
     # Determine the current time-of-day label
     time_label = TIME_SLOTS[moment_index]

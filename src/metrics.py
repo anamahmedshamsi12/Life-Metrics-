@@ -52,7 +52,9 @@ DEFAULT_METRICS = {
 }
 
 
-def init_metrics(mode: str, custom_metric_names: List[str] | None = None) -> MetricDict:
+def init_metrics(
+        mode: str,
+        custom_metric_names: List[str] | None = None) -> MetricDict:
     """
     Initialize a dictionary of life metrics based on the selected simulation mode.
 
@@ -86,19 +88,22 @@ def init_metrics(mode: str, custom_metric_names: List[str] | None = None) -> Met
               metrics (e.g., Health, Happiness, Productivity) instead of
               raising an error.
     """
-    # Check if the simulation is running in custom mode and custom metrics were provided
+    # Check if the simulation is running in custom mode and custom metrics
+    # were provided
     if mode == "custom" and custom_metric_names:
 
-        # Clean up metric names by stripping whitespace and removing empty entries
+        # Clean up metric names by stripping whitespace and removing empty
+        # entries
         names = [name.strip() for name in custom_metric_names if name.strip()]
-        
+
         # If no valid metric names remain, fall back to a default placeholder
         if not names:
             names = ["Primary goal"]
     else:
         # Use predefined metrics for student or professional mode,
         # or fall back to a generic default set if the mode is unknown
-        names = DEFAULT_METRICS.get(mode, ["Health", "Happiness", "Productivity"])
+        names = DEFAULT_METRICS.get(
+            mode, ["Health", "Happiness", "Productivity"])
     # Create and return a dictionary where each metric starts at value 60
     return {name: 60 for name in names}
 

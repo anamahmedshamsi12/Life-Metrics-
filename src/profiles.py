@@ -19,6 +19,7 @@ added or modified without changing the core simulation or routing
 logic, following the modular design principles emphasized in CS5001.
 """
 
+
 class Profile:
     """
     Represents a lifestyle profile used by the simulator.
@@ -40,6 +41,8 @@ class Profile:
             Optional list of labels for activities, primarily used for
             Custom Life simulations where the user defines their own actions.
     """
+
+
 class Profile:
     """
     Represent a simulation profile configuration.
@@ -75,7 +78,12 @@ class Profile:
               may have limited behavior.
     """
 
-    def __init__(self, name, initial_metrics, mode: str = "student", activity_labels=None):
+    def __init__(
+            self,
+            name,
+            initial_metrics,
+            mode: str = "student",
+            activity_labels=None):
         # Store the human-readable name of the profile
         self.name = name
 
@@ -85,7 +93,8 @@ class Profile:
         # Store the mode identifier string
         self.mode = mode
 
-        # Store activity labels, defaulting to an empty list if none are provided
+        # Store activity labels, defaulting to an empty list if none are
+        # provided
         self.activity_labels = activity_labels or []
 
 
@@ -147,7 +156,9 @@ def get_profile_from_form_value(value: str) -> Profile:
     )
 
 
-def build_custom_profile(metric_names: list[str], activity_labels: list[str]) -> Profile:
+def build_custom_profile(
+        metric_names: list[str],
+        activity_labels: list[str]) -> Profile:
     """
     Construct a custom simulation profile from user-provided inputs.
 
@@ -202,4 +213,3 @@ def build_custom_profile(metric_names: list[str], activity_labels: list[str]) ->
         mode="custom",
         activity_labels=activity_labels,
     )
-

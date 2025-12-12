@@ -258,4 +258,3 @@ ACTIONS: Dict[str, List[Action]] = {
         },
     ],
 }
-

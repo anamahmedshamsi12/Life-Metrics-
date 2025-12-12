@@ -587,7 +587,8 @@ def recursive_metric_trend(
     next_value = log_entries[index + 1]["snapshot"].get(metric_name, 0)
     difference = next_value - current_value
 
-    return difference + recursive_metric_trend(log_entries, metric_name, index + 1)
+    return difference + \
+        recursive_metric_trend(log_entries, metric_name, index + 1)
 
 
 if __name__ == "__main__":
