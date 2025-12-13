@@ -687,7 +687,7 @@ Key aspects could include pieces that your struggled on and/or pieces that you a
 Explain how you documented running the project, and what we need to look for in your repository (text output from the project, small videos, links to videos on youtube of you running it, etc)
 
 > A recorded demo video demonstrating a complete example run of the project
-is included in the repository. 
+is included in the repository at the following link: https://github.com/Fa25-CS5001-Online-Lionelle/finalproject-anamahmedshamsi12/blob/main/testrun.mp4
 
 
 ## Testing
