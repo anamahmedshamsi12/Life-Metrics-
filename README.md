@@ -128,7 +128,7 @@ This project runs as a local Flask web application and does not require any API 
 2. Download or clone the project repository so the project files are available locally.
 3. Open a terminal and navigate to the project’s root directory.
 4. Install the required dependency by running `pip install flask`.
-5. Start the application by running `python app.py`.
+5. Start the application by running `python3 app.py`.
 6. Open a web browser and navigate to `http://127.0.0.1:5000`.
 
 The application will remain accessible in the browser as long as the Flask server is running.
