@@ -11,7 +11,7 @@ The application supports Student Mode, Professional Mode, and Custom Mode, each 
 **Dynamic Metric Visualization**  
 Life metrics are visualized using horizontal progress bars with percentage values and threshold-based color changes. Metrics update in real time after each check-in, providing immediate visual feedback while also supporting long-term trend observation.
 
->**Custom Mode Presets for High-Level Decisions**  
+**Custom Mode Presets for High-Level Decisions**  
 Custom Mode introduces high-level decision presets that summarize how a portion of the day felt overall, allowing users to update multiple metrics simultaneously without entering granular actions. This design balances ease of use with meaningful state changes.
 
 **Cumulative Trend Tracking**  
