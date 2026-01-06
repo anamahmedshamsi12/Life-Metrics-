@@ -99,9 +99,6 @@ Professional Mode models decision-making within a professional context by repres
 >![Professional Life Decisions](report%20images/screenshots/professional_mode_decisions.png)
 >Decision selection interface in Professional Mode, presenting realistic workplace-related choices at each check-in. Each decision represents a trade-off commonly encountered in professional settings, and selecting an option advances the simulation, updates life metrics, and records the action in the decision log to reflect cumulative behavioral patterns.
 
-## Installation Instructions
-If we wanted to run this project locally, what would we need to do?  If we need to get API key's include that information, and also command line startup commands to execute the project. If you have a lot of dependencies, you can also include a requirements.txt file, but make sure to include that we need to run `pip install -r requirements.txt` or something similar.
-
 >## Running the Project Locally
 
 This project runs as a local Flask web application and does not require any API keys.
