@@ -112,5 +112,3 @@ This project runs as a local Flask web application and does not require any API 
 
 The application will remain accessible in the browser as long as the Flask server is running.
 
-
-t values structure, clarity, and creative problem solving, which is something I expect to carry forward beyond this class.
