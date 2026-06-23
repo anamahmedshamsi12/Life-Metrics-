@@ -488,10 +488,16 @@
           <div class="brand-title">Life Metrics</div>
           <div class="brand-subtitle">Interactive life tradeoff simulator</div>
         </div>
-        <a href="{{ url_for('reset') }}" class="back-button">
-          <span>←</span>
-          <span>Back to modes</span>
-        </a>
+        <div style="display: flex; gap: 8px;">
+          <a href="{{ url_for('trends') }}" class="back-button">
+            <span>↗</span>
+            <span>View trends</span>
+          </a>
+          <a href="{{ url_for('reset') }}" class="back-button">
+            <span>←</span>
+            <span>Back to modes</span>
+          </a>
+        </div>
       </header>
 
       <main>

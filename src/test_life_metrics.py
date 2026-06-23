@@ -1,9 +1,11 @@
 import metrics    # type: ignore
 import simulation  # type: ignore
+import db          # type: ignore
 from typing import Dict, Any, List
 import unittest
 import sys
 import os
+import tempfile
 
 # Make sure Python can import from ../src just like the example test file
 sys.path.insert(
@@ -238,6 +240,76 @@ class TestLifeMetrics(unittest.TestCase):
 
         net_change = simulation.recursive_metric_trend(log_entries, "Energy")
         self.assertEqual(net_change, -5)
+
+
+class TestDb(unittest.TestCase):
+    """Unit tests for the SQLite persistence layer in db.py."""
+
+    def setUp(self) -> None:
+        """Point db.DB_PATH at a fresh temporary file for each test."""
+        self._original_db_path = db.DB_PATH
+        self._temp_file = tempfile.NamedTemporaryFile(
+            suffix=".db", delete=False)
+        self._temp_file.close()
+        db.DB_PATH = self._temp_file.name
+        db.init_db()
+
+    def tearDown(self) -> None:
+        """Restore the real DB_PATH and remove the temporary file."""
+        db.DB_PATH = self._original_db_path
+        os.remove(self._temp_file.name)
+
+    def test_create_run_and_insert_check_in_round_trip(self) -> None:
+        """Tests that a run and its check-ins persist and load back correctly."""
+        run_id = db.create_run("student", None)
+
+        entry_one = {
+            "day": 1,
+            "moment": 1,
+            "time_label": "Morning",
+            "action_label": "Sleep 8 hours",
+            "snapshot": {"Academics": 62, "Sleep": 68},
+            "note": "Felt rested.",
+        }
+        entry_two = {
+            "day": 1,
+            "moment": 2,
+            "time_label": "Afternoon",
+            "action_label": "Deep study session (2 hrs)",
+            "snapshot": {"Academics": 72, "Sleep": 64},
+            "note": "",
+        }
+
+        db.insert_check_in(run_id, "sleep_early", entry_one)
+        db.insert_check_in(run_id, "study_block", entry_two)
+
+        check_ins = db.get_check_ins_for_run(run_id)
+
+        self.assertEqual(len(check_ins), 2)
+        self.assertEqual(check_ins[0]["time_label"], "Morning")
+        self.assertEqual(check_ins[0]["metrics"], {"Academics": 62, "Sleep": 68})
+        self.assertEqual(check_ins[1]["action_label"], "Deep study session (2 hrs)")
+        self.assertEqual(check_ins[1]["metrics"]["Academics"], 72)
+
+    def test_create_run_persists_custom_metric_names(self) -> None:
+        """Tests that custom-mode runs store their custom metric names."""
+        run_id = db.create_run("custom", ["Energy", "Focus"])
+
+        # No check-ins yet should return an empty list, not an error
+        self.assertEqual(db.get_check_ins_for_run(run_id), [])
+
+        # custom_metric_names was written for this run
+        import sqlite3
+        conn = sqlite3.connect(db.DB_PATH)
+        row = conn.execute(
+            "SELECT custom_metric_names FROM runs WHERE id = ?",
+            (run_id,),
+        ).fetchone()
+        conn.close()
+
+        self.assertIsNotNone(row)
+        self.assertIn("Energy", row[0])
+        self.assertIn("Focus", row[0])
 
 
 if __name__ == "__main__":

@@ -26,11 +26,17 @@ from simulation import (
     recursive_metric_trend,
 )
 
+# Import the SQLite persistence layer for runs and check-ins
+import db
+
 # Create the Flask application instance
 app = Flask(__name__)
 
 # Set a secret key so Flask sessions can be securely signed
 app.secret_key = "life-metrics-secret-key"
+
+# Ensure the SQLite tables exist before handling any requests
+db.init_db()
 
 
 @app.route("/")
@@ -121,6 +127,10 @@ def start():
 
     # Clear any previous session data
     session.clear()
+
+    # Create a persistent run record so this simulation's history survives
+    # across sessions, and remember its id for logging check-ins later
+    session["run_id"] = db.create_run(mode, None)
 
     # Store simulation state in the session
     session["mode"] = mode
@@ -225,6 +235,9 @@ def custom_setup():
         # Clear any existing session data
         session.clear()
 
+        # Create a persistent run record for this custom simulation
+        session["run_id"] = db.create_run(mode, clean_metric_names)
+
         # Store custom simulation state
         session["mode"] = mode
         session["custom_metrics"] = clean_metric_names
@@ -307,6 +320,10 @@ def simulate():
         action_id = request.form.get("action_id")
         note = request.form.get("note", "").strip()
 
+        # Remember how many entries existed before this check-in so we can
+        # tell whether log_check_in actually logged a new one
+        entries_before = len(log_entries)
+
         # Apply the action and update simulation state
         metrics, log_entries, new_day, new_moment_index = log_check_in(
             mode=mode,
@@ -325,6 +342,11 @@ def simulate():
         session["log"] = log_entries
         session["day"] = new_day
         session["moment_index"] = new_moment_index
+
+        # Persist this check-in to SQLite so it survives across sessions
+        run_id = session.get("run_id")
+        if run_id and len(log_entries) > entries_before:
+            db.insert_check_in(run_id, action_id, log_entries[-1])
 
         # Redirect to avoid duplicate form submissions
         return redirect(url_for("simulate"))
@@ -370,6 +392,72 @@ def simulate():
         check_in=check_in,
         total_check_ins=total_check_ins,
         trend_summary=trend_summary,
+    )
+
+
+@app.route("/trends")
+def trends():
+    """
+    Display a line-chart dashboard of how each metric has changed over
+    time for the currently active run.
+
+    This route reads every check-in stored in SQLite for the run tied to
+    the current session, builds one labeled value series per metric, and
+    hands that data to the trends template for client-side charting with
+    Chart.js.
+
+    Args:
+        None
+
+    Returns:
+        Response: A rendered HTML response for the trends.html template
+        when a run is active, or a redirect to the index page if there
+        is no active run (e.g. after a reset or before starting).
+
+    Examples:
+        Normal case:
+            - A user with at least one logged check-in visits "/trends"
+              and sees one line chart per metric.
+
+        Edge case 1:
+            - A user visits "/trends" before making any check-ins. The
+              page renders with an empty-state message instead of charts.
+
+        Edge case 2:
+            - A user visits "/trends" without an active session (no
+              run_id). They are redirected back to the main menu.
+    """
+
+    # Read the active run and mode from the session
+    run_id = session.get("run_id")
+    mode = session.get("mode")
+
+    # Redirect to the menu if there is no active run to chart
+    if not run_id or not mode:
+        return redirect(url_for("index"))
+
+    # Fetch every check-in logged so far for this run from SQLite
+    check_ins = db.get_check_ins_for_run(run_id)
+
+    # Build one series per metric: a list of labels and a list of values
+    series: dict[str, dict[str, list]] = {}
+    for entry in check_ins:
+        label = f"Day {entry['day']} · {entry['time_label']}"
+        for metric_name, value in entry["metrics"].items():
+            series.setdefault(metric_name, {"labels": [], "values": []})
+            series[metric_name]["labels"].append(label)
+            series[metric_name]["values"].append(value)
+
+    # Load custom metric labels if in custom mode
+    custom_metrics = session.get(
+        "custom_metrics") if mode == "custom" else None
+
+    # Render the trends template with the chart data
+    return render_template(
+        "trends.html",
+        mode=mode,
+        series=series,
+        custom_metrics=custom_metrics,
     )
 
 
