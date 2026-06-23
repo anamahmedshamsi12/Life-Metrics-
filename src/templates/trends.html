@@ -1,274 +1,271 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Life Metrics · Trends</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      :root {
-        --bg-gradient-top: #eef2ff;
-        --bg-gradient-bottom: #e0f7f3;
-        --card-bg: rgba(255, 255, 255, 0.96);
-        --border-subtle: rgba(148, 163, 184, 0.5);
-        --text-main: #0f172a;
-        --text-muted: #6b7280;
-        --accent-peri: #4f46e5;
-        --accent-teal: #0d9488;
-        --shadow-soft: 0 14px 40px rgba(15, 23, 42, 0.16);
-      }
+{% extends "base.html" %}
+{% block title %}Trends{% endblock %}
 
-      * {
-        box-sizing: border-box;
-      }
+{% block extra_style %}
+<style>
+  :root {
+    --bg-gradient-top: #eef2ff;
+    --bg-gradient-bottom: #e0f7f3;
+    --card-bg: rgba(255, 255, 255, 0.96);
+    --border-subtle: rgba(148, 163, 184, 0.5);
+    --text-main: #0f172a;
+    --text-muted: #6b7280;
+    --accent-peri: #4f46e5;
+    --accent-teal: #0d9488;
+    --shadow-soft: 0 14px 40px rgba(15, 23, 42, 0.16);
+  }
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          sans-serif;
-        background: radial-gradient(circle at top left, #e0f2fe, #eef2ff 32%)
-            no-repeat,
-          radial-gradient(circle at bottom right, #ccfbf1, #eff6ff 40%)
-            no-repeat;
-        color: var(--text-main);
-      }
+  * {
+    box-sizing: border-box;
+  }
 
-      .page {
-        max-width: 1160px;
-        margin: 0 auto;
-        padding: 24px 18px 32px;
-      }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+    background: radial-gradient(circle at top left, #e0f2fe, #eef2ff 32%)
+        no-repeat,
+      radial-gradient(circle at bottom right, #ccfbf1, #eff6ff 40%)
+        no-repeat;
+    color: var(--text-main);
+  }
 
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
+  .page {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 24px 18px 32px;
+  }
 
-      .brand {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 
-      .brand-title {
-        font-weight: 800;
-        letter-spacing: 0.06em;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        color: #1e293b;
-      }
+  .brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
 
-      .brand-subtitle {
-        font-size: 0.82rem;
-        color: var(--text-muted);
-      }
+  .brand-title {
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #1e293b;
+  }
 
-      .header-links {
-        display: flex;
-        gap: 8px;
-      }
+  .brand-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
 
-      .back-button {
-        padding: 8px 14px;
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.65);
-        background: rgba(248, 250, 252, 0.9);
-        font-size: 0.82rem;
-        color: #0f172a;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        cursor: pointer;
-        transition: background 0.12s ease, border-color 0.12s ease,
-          transform 0.1s ease, box-shadow 0.1s ease;
-      }
+  .header-links {
+    display: flex;
+    gap: 8px;
+  }
 
-      .back-button:hover {
-        background: #ffffff;
-        border-color: rgba(148, 163, 184, 0.9);
-        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
-        transform: translateY(-0.5px);
-      }
+  .back-button {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.65);
+    background: rgba(248, 250, 252, 0.9);
+    font-size: 0.82rem;
+    color: #0f172a;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease,
+      transform 0.1s ease, box-shadow 0.1s ease;
+  }
 
-      .back-button span:first-child {
-        font-size: 1rem;
-      }
+  .back-button:hover {
+    background: #ffffff;
+    border-color: rgba(148, 163, 184, 0.9);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+    transform: translateY(-0.5px);
+  }
 
-      .section-title {
-        font-size: 0.78rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: #818cf8;
-        margin-bottom: 4px;
-      }
+  .back-button span:first-child {
+    font-size: 1rem;
+  }
 
-      .section-heading {
-        font-size: 1.3rem;
-        font-weight: 700;
-      }
+  .section-title {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #818cf8;
+    margin-bottom: 4px;
+  }
 
-      .section-desc {
-        font-size: 0.86rem;
-        color: var(--text-muted);
-        margin-top: 6px;
-        line-height: 1.5;
-        max-width: 640px;
-      }
+  .section-heading {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
 
-      .charts-grid {
-        margin-top: 22px;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-        gap: 22px;
-      }
+  .section-desc {
+    font-size: 0.86rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    line-height: 1.5;
+    max-width: 640px;
+  }
 
-      .panel {
-        background: var(--card-bg);
-        border-radius: 26px;
-        padding: 20px 20px 18px;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(148, 163, 184, 0.25);
-        backdrop-filter: blur(10px);
-      }
+  .charts-grid {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 22px;
+  }
 
-      .panel-header-kicker {
-        font-size: 0.78rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: #818cf8;
-        margin-bottom: 4px;
-      }
+  .panel {
+    background: var(--card-bg);
+    border-radius: 26px;
+    padding: 20px 20px 18px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    backdrop-filter: blur(10px);
+  }
 
-      .panel-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-      }
+  .panel-header-kicker {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #818cf8;
+    margin-bottom: 4px;
+  }
 
-      .chart-wrap {
-        margin-top: 14px;
-        position: relative;
-        height: 220px;
-      }
+  .panel-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
 
-      .empty-state {
-        margin-top: 22px;
-        background: var(--card-bg);
-        border-radius: 26px;
-        padding: 32px 24px;
-        box-shadow: var(--shadow-soft);
-        border: 1px solid rgba(148, 163, 184, 0.25);
-        text-align: center;
-        color: var(--text-muted);
-        font-size: 0.92rem;
-      }
-    </style>
-  </head>
+  .chart-wrap {
+    margin-top: 14px;
+    position: relative;
+    height: 220px;
+  }
 
-  <body>
-    <div class="page">
-      <header>
-        <div class="brand">
-          <div class="brand-title">Life Metrics</div>
-          <div class="brand-subtitle">Trend dashboard</div>
-        </div>
-        <div class="header-links">
-          <a href="{{ url_for('simulate') }}" class="back-button">
-            <span>←</span>
-            <span>Back to simulation</span>
-          </a>
-          <a href="{{ url_for('reset') }}" class="back-button">
-            <span>←</span>
-            <span>Back to modes</span>
-          </a>
-        </div>
-      </header>
+  .empty-state {
+    margin-top: 22px;
+    background: var(--card-bg);
+    border-radius: 26px;
+    padding: 32px 24px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+  }
+</style>
+{% endblock %}
 
-      <main>
-        <div class="section-title">Current snapshot</div>
-        <div class="section-heading">How your metrics have moved over time</div>
-        <p class="section-desc">
-          Each chart below plots one metric across every check-in you have
-          logged so far in this
-          {% if mode == "student" %}
-            Student Life
-          {% elif mode == "professional" %}
-            Professional Life
-          {% else %}
-            Custom Life
-          {% endif %}
-          run.
-        </p>
-
-        {% if not series %}
-          <div class="empty-state">
-            No check-ins logged yet for this run. Make a few decisions in the
-            simulation, then come back here to see trends appear.
-          </div>
-        {% else %}
-          <div class="charts-grid">
-            {% for metric_name in series %}
-              <div class="panel">
-                <div class="panel-header-kicker">Metric trend</div>
-                <div class="panel-title">{{ metric_name }}</div>
-                <div class="chart-wrap">
-                  <canvas id="chart-{{ loop.index }}"></canvas>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      </main>
+{% block content %}
+<div class="page">
+  <header>
+    <div class="brand">
+      <div class="brand-title">Life Metrics</div>
+      <div class="brand-subtitle">Trend dashboard</div>
     </div>
+    <div class="header-links">
+      <a href="{{ url_for('simulate') }}" class="back-button">
+        <span>←</span>
+        <span>Back to simulation</span>
+      </a>
+      <a href="{{ url_for('reset') }}" class="back-button">
+        <span>←</span>
+        <span>Back to modes</span>
+      </a>
+    </div>
+  </header>
 
-    {% if series %}
-      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-      <script>
-        const series = {{ series | tojson }};
+  <main>
+    <div class="section-title">Current snapshot</div>
+    <div class="section-heading">How your metrics have moved over time</div>
+    <p class="section-desc">
+      Each chart below plots one metric across every check-in you have
+      logged so far in this
+      {% if mode == "student" %}
+        Student Life
+      {% elif mode == "professional" %}
+        Professional Life
+      {% else %}
+        Custom Life
+      {% endif %}
+      run.
+    </p>
 
-        Object.values(series).forEach((data, index) => {
-          const canvas = document.getElementById(`chart-${index + 1}`);
-          new Chart(canvas, {
-            type: "line",
-            data: {
-              labels: data.labels,
-              datasets: [
-                {
-                  data: data.values,
-                  borderColor: "#4f46e5",
-                  backgroundColor: "rgba(79, 70, 229, 0.12)",
-                  pointBackgroundColor: "#0ea5e9",
-                  borderWidth: 2,
-                  tension: 0.3,
-                  fill: true,
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-              },
-              scales: {
-                y: {
-                  min: 0,
-                  max: 100,
-                  grid: { color: "rgba(226, 232, 240, 0.9)" },
-                },
-                x: {
-                  grid: { display: false },
-                  ticks: { maxRotation: 0, autoSkip: true },
-                },
-              },
-            },
-          });
-        });
-      </script>
+    {% if not series %}
+      <div class="empty-state">
+        No check-ins logged yet for this run. Make a few decisions in the
+        simulation, then come back here to see trends appear.
+      </div>
+    {% else %}
+      <div class="charts-grid">
+        {% for metric_name in series %}
+          <div class="panel">
+            <div class="panel-header-kicker">Metric trend</div>
+            <div class="panel-title">{{ metric_name }}</div>
+            <div class="chart-wrap">
+              <canvas id="chart-{{ loop.index }}"></canvas>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
     {% endif %}
-  </body>
-</html>
+  </main>
+</div>
+
+{% if series %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const series = {{ series | tojson }};
+
+    Object.values(series).forEach((data, index) => {
+      const canvas = document.getElementById(`chart-${index + 1}`);
+      new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: data.labels,
+          datasets: [
+            {
+              data: data.values,
+              borderColor: "#4f46e5",
+              backgroundColor: "rgba(79, 70, 229, 0.12)",
+              pointBackgroundColor: "#0ea5e9",
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              grid: { color: "rgba(226, 232, 240, 0.9)" },
+            },
+            x: {
+              grid: { display: false },
+              ticks: { maxRotation: 0, autoSkip: true },
+            },
+          },
+        },
+      });
+    });
+  </script>
+{% endif %}
+{% endblock %}

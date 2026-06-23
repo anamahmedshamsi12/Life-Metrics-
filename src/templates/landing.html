@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% block title %}Measure Your Life{% endblock %}
+
+{% block extra_style %}
+<style>
+  :root {
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --panel-bg: #ffffff;
+    --accent-main: #6366f1;
+    --accent-teal: #0d9488;
+    --bg-start: #eef2ff;
+    --bg-mid: #f8fafc;
+    --bg-end: #ecfeff;
+    --shadow-soft: 0 20px 50px rgba(15, 23, 42, 0.1);
+    --radius: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text-main);
+    background:
+      radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.08), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(13, 148, 136, 0.08), transparent 45%),
+      linear-gradient(135deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+  }
+
+  a {
+    color: inherit;
+  }
+
+  .hero {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 64px 24px 40px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  .logo {
+    max-width: 170px;
+    opacity: 0.95;
+  }
+
+  .tagline {
+    font-size: 40px;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+
+  .tagline span {
+    background: linear-gradient(90deg, var(--accent-main), var(--accent-teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .description {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    max-width: 560px;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .cta-primary {
+    padding: 12px 26px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+    background: linear-gradient(120deg, #6366f1, #06b6d4);
+    color: white;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .cta-primary:hover {
+    opacity: 0.95;
+  }
+
+  .cta-secondary {
+    padding: 12px 26px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.65);
+    background: rgba(248, 250, 252, 0.9);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .cta-secondary:hover {
+    background: #ffffff;
+    border-color: rgba(148, 163, 184, 0.9);
+  }
+
+  section.section-block {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 36px 24px;
+  }
+
+  .section-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .section-headline {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  /* How it works */
+  .how-it-works-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 28px;
+  }
+
+  @media (max-width: 800px) {
+    .how-it-works-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .how-card {
+    background: var(--panel-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+    padding: 22px 20px;
+  }
+
+  .how-step {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-main);
+    margin-bottom: 6px;
+  }
+
+  .how-text {
+    font-size: 14px;
+    color: var(--text-main);
+    line-height: 1.5;
+  }
+
+  /* Modes / features */
+  .modes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 28px;
+  }
+
+  @media (max-width: 900px) {
+    .modes-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .mode-card {
+    position: relative;
+    overflow: hidden;
+    padding: 18px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.25s ease, transform 0.25s ease;
+  }
+
+  .mode-card:hover {
+    border-color: rgba(99, 102, 241, 0.45);
+    transform: translateY(-1px);
+  }
+
+  .mode-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mode-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .mode-tag {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--accent-main);
+  }
+
+  .mode-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* Footer */
+  .site-footer {
+    text-align: center;
+    padding: 28px 24px 48px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <img
+    src="{{ url_for('static', filename='life_metrics_logo.png') }}"
+    alt="Life Metrics logo"
+    class="logo"
+  />
+
+  <div class="tagline">
+    Measure your life.<br />
+    <span>Understand your tradeoffs.</span>
+  </div>
+
+  <p class="description">
+    Life Metrics is an interactive decision simulator designed to make
+    tradeoffs visible. Log realistic daily choices and observe how patterns
+    shape long-term balance.
+  </p>
+
+  <div class="cta-row">
+    <a href="{{ url_for('register') }}" class="cta-primary">Get started free</a>
+    <a href="{{ url_for('login') }}" class="cta-secondary">Log in</a>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="section-eyebrow">How it works</div>
+  <div class="section-headline">Three steps, repeated daily</div>
+  <div class="how-it-works-grid">
+    <div class="how-card">
+      <div class="how-step">1.</div>
+      <div class="how-text">Choose a life context.</div>
+    </div>
+    <div class="how-card">
+      <div class="how-step">2.</div>
+      <div class="how-text">Log one realistic decision per day.</div>
+    </div>
+    <div class="how-card">
+      <div class="how-step">3.</div>
+      <div class="how-text">Observe patterns, not perfection.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="section-eyebrow">Simulation modes</div>
+  <div class="section-headline">Three ways to start</div>
+  <div class="modes-grid">
+    <a href="{{ url_for('register') }}" class="mode-card">
+      <div class="mode-title-row">
+        <div class="mode-title">Student Life</div>
+        <div class="mode-tag">Academic</div>
+      </div>
+      <div class="mode-desc">
+        Balance academics, mental health, sleep, and social life as daily
+        decisions add up.
+      </div>
+    </a>
+
+    <a href="{{ url_for('register') }}" class="mode-card">
+      <div class="mode-title-row">
+        <div class="mode-title">Professional Life</div>
+        <div class="mode-tag">Career</div>
+      </div>
+      <div class="mode-desc">
+        Explore tradeoffs between career growth, health, finances, and
+        burnout over time.
+      </div>
+    </a>
+
+    <a href="{{ url_for('register') }}" class="mode-card">
+      <div class="mode-title-row">
+        <div class="mode-title">Custom Life</div>
+        <div class="mode-tag">Advanced</div>
+      </div>
+      <div class="mode-desc">
+        Define your own metrics and describe what "good," "okay," and "hard"
+        days actually mean to you.
+      </div>
+    </a>
+  </div>
+</section>
+
+<footer class="site-footer">Life Metrics · Built with Flask</footer>
+{% endblock %}

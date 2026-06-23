@@ -1,11 +1,20 @@
 import metrics    # type: ignore
 import simulation  # type: ignore
-import db          # type: ignore
 from typing import Dict, Any, List
 import unittest
 import sys
 import os
-import tempfile
+
+from flask import Flask
+from models import (   # type: ignore
+    db,
+    User,
+    create_run,
+    insert_check_in,
+    get_check_ins_for_run,
+    get_runs_for_user,
+    get_owned_run,
+)
 
 # Make sure Python can import from ../src just like the example test file
 sys.path.insert(
@@ -243,25 +252,34 @@ class TestLifeMetrics(unittest.TestCase):
 
 
 class TestDb(unittest.TestCase):
-    """Unit tests for the SQLite persistence layer in db.py."""
+    """Unit tests for the SQLAlchemy persistence layer in models.py."""
 
     def setUp(self) -> None:
-        """Point db.DB_PATH at a fresh temporary file for each test."""
-        self._original_db_path = db.DB_PATH
-        self._temp_file = tempfile.NamedTemporaryFile(
-            suffix=".db", delete=False)
-        self._temp_file.close()
-        db.DB_PATH = self._temp_file.name
-        db.init_db()
+        """Spin up a throwaway Flask app backed by an in-memory SQLite DB."""
+        self.app = Flask(__name__)
+        self.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
+        self.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        db.init_app(self.app)
+
+        self._ctx = self.app.app_context()
+        self._ctx.push()
+        db.create_all()
+
+        user = User(email="test@example.com")
+        user.set_password("hunter2")
+        db.session.add(user)
+        db.session.commit()
+        self.user_id = user.id
 
     def tearDown(self) -> None:
-        """Restore the real DB_PATH and remove the temporary file."""
-        db.DB_PATH = self._original_db_path
-        os.remove(self._temp_file.name)
+        """Tear down the in-memory database and pop the app context."""
+        db.session.remove()
+        db.drop_all()
+        self._ctx.pop()
 
     def test_create_run_and_insert_check_in_round_trip(self) -> None:
         """Tests that a run and its check-ins persist and load back correctly."""
-        run_id = db.create_run("student", None)
+        run_id = create_run(self.user_id, "student", None)
 
         entry_one = {
             "day": 1,
@@ -280,10 +298,10 @@ class TestDb(unittest.TestCase):
             "note": "",
         }
 
-        db.insert_check_in(run_id, "sleep_early", entry_one)
-        db.insert_check_in(run_id, "study_block", entry_two)
+        insert_check_in(run_id, "sleep_early", entry_one)
+        insert_check_in(run_id, "study_block", entry_two)
 
-        check_ins = db.get_check_ins_for_run(run_id)
+        check_ins = get_check_ins_for_run(run_id)
 
         self.assertEqual(len(check_ins), 2)
         self.assertEqual(check_ins[0]["time_label"], "Morning")
@@ -291,25 +309,55 @@ class TestDb(unittest.TestCase):
         self.assertEqual(check_ins[1]["action_label"], "Deep study session (2 hrs)")
         self.assertEqual(check_ins[1]["metrics"]["Academics"], 72)
 
-    def test_create_run_persists_custom_metric_names(self) -> None:
-        """Tests that custom-mode runs store their custom metric names."""
-        run_id = db.create_run("custom", ["Energy", "Focus"])
+    def test_create_run_persists_custom_metric_names_and_actions(self) -> None:
+        """Tests that custom-mode runs store metric names and action presets."""
+        custom_actions = [
+            {"id": "strong_day", "label": "Strong", "description": "Strong day."},
+            {"id": "steady_day", "label": "Steady", "description": "Steady day."},
+            {"id": "tough_day", "label": "Tough", "description": "Tough day."},
+        ]
+        run_id = create_run(
+            self.user_id, "custom", ["Energy", "Focus"], custom_actions
+        )
 
         # No check-ins yet should return an empty list, not an error
-        self.assertEqual(db.get_check_ins_for_run(run_id), [])
+        self.assertEqual(get_check_ins_for_run(run_id), [])
 
-        # custom_metric_names was written for this run
-        import sqlite3
-        conn = sqlite3.connect(db.DB_PATH)
-        row = conn.execute(
-            "SELECT custom_metric_names FROM runs WHERE id = ?",
-            (run_id,),
-        ).fetchone()
-        conn.close()
+        owned_run = get_owned_run(run_id, self.user_id)
+        self.assertIsNotNone(owned_run)
+        self.assertIn("Energy", owned_run.custom_metric_names)
+        self.assertIn("Focus", owned_run.custom_metric_names)
+        self.assertIn("strong_day", owned_run.custom_actions)
 
-        self.assertIsNotNone(row)
-        self.assertIn("Energy", row[0])
-        self.assertIn("Focus", row[0])
+    def test_get_owned_run_rejects_other_users(self) -> None:
+        """Tests that get_owned_run() returns None for a non-owning user."""
+        run_id = create_run(self.user_id, "student", None)
+
+        other_user = User(email="someone-else@example.com")
+        other_user.set_password("hunter3")
+        db.session.add(other_user)
+        db.session.commit()
+
+        self.assertIsNotNone(get_owned_run(run_id, self.user_id))
+        self.assertIsNone(get_owned_run(run_id, other_user.id))
+
+    def test_get_runs_for_user_orders_newest_first(self) -> None:
+        """Tests that get_runs_for_user() returns runs newest-created first."""
+        first_run_id = create_run(self.user_id, "student", None)
+        second_run_id = create_run(self.user_id, "professional", None)
+
+        runs = get_runs_for_user(self.user_id)
+
+        self.assertEqual([run.id for run in runs], [second_run_id, first_run_id])
+
+    def test_user_password_hashing(self) -> None:
+        """Tests that User passwords are hashed, not stored as plaintext."""
+        user = User(email="hash-check@example.com")
+        user.set_password("super-secret")
+
+        self.assertNotEqual(user.password_hash, "super-secret")
+        self.assertTrue(user.check_password("super-secret"))
+        self.assertFalse(user.check_password("wrong-password"))
 
 
 if __name__ == "__main__":

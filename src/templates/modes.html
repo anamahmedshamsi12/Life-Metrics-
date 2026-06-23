@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Choose a Mode{% endblock %}
+
+{% block extra_style %}
+<style>
+  :root {
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --panel-bg: #ffffff;
+    --accent-main: #6366f1;
+    --accent-teal: #0d9488;
+    --bg-start: #eef2ff;
+    --bg-mid: #f8fafc;
+    --bg-end: #ecfeff;
+    --shadow-soft: 0 20px 50px rgba(15, 23, 42, 0.1);
+    --radius: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text-main);
+    background:
+      radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.08), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(13, 148, 136, 0.08), transparent 45%),
+      linear-gradient(135deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 56px 24px;
+  }
+
+  .panel-card {
+    background: var(--panel-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+    padding: 28px 26px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .headline {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-top: 6px;
+  }
+
+  .subhead {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .modes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .mode-card {
+    position: relative;
+    overflow: hidden;
+    padding: 16px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    transition: border-color 0.25s ease, transform 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  .mode-card:hover {
+    border-color: rgba(99, 102, 241, 0.45);
+    transform: translateY(-1px);
+  }
+
+  .mode-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mode-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .mode-tag {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--accent-main);
+  }
+
+  .mode-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .mode-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .footer-note {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <div class="panel-card">
+    <div class="eyebrow">Simulation modes</div>
+    <div class="headline">Choose a starting context</div>
+    <p class="subhead">
+      Start where you are right now. You can reset and explore another
+      perspective at any time.
+    </p>
+
+    <div class="modes">
+      <!-- Custom Life -->
+      <a href="{{ url_for('custom_setup') }}">
+        <div class="mode-card">
+          <div class="mode-title-row">
+            <div class="mode-title">Custom Life</div>
+            <div class="mode-tag">Advanced</div>
+          </div>
+          <div class="mode-desc">
+            Define your own metrics and describe what "good," "okay," and "hard"
+            days actually mean to you.
+          </div>
+          <div class="mode-hint">
+            Best for reflective or non-traditional paths.
+          </div>
+        </div>
+      </a>
+
+      <!-- Professional Life -->
+      <a href="{{ url_for('start', profile='professional') }}">
+        <div class="mode-card">
+          <div class="mode-title-row">
+            <div class="mode-title">Professional Life</div>
+            <div class="mode-tag">Career</div>
+          </div>
+          <div class="mode-desc">
+            Explore tradeoffs between career growth, health, finances,
+            and burnout over time.
+          </div>
+          <div class="mode-hint">
+            Useful for working or post-grad scenarios.
+          </div>
+        </div>
+      </a>
+
+      <!-- Student Life -->
+      <a href="{{ url_for('start', profile='student') }}">
+        <div class="mode-card">
+          <div class="mode-title-row">
+            <div class="mode-title">Student Life</div>
+            <div class="mode-tag">Academic</div>
+          </div>
+          <div class="mode-desc">
+            Balance academics, mental health, sleep, and social life as
+            daily decisions add up.
+          </div>
+          <div class="mode-hint">
+            Designed for undergrad and graduate students.
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="footer-note">
+      <a href="{{ url_for('dashboard') }}" style="text-decoration: underline;">
+        ← Back to dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

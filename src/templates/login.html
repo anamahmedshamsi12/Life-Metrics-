@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Log In{% endblock %}
+
+{% block extra_style %}
+<style>
+  :root {
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --panel-bg: #ffffff;
+    --accent-main: #6366f1;
+    --accent-teal: #0d9488;
+    --bg-start: #eef2ff;
+    --bg-mid: #f8fafc;
+    --bg-end: #ecfeff;
+    --shadow-soft: 0 20px 50px rgba(15, 23, 42, 0.1);
+    --radius: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text-main);
+    background:
+      radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.08), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(13, 148, 136, 0.08), transparent 45%),
+      linear-gradient(135deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+  }
+
+  .auth-wrap {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 72px 24px;
+  }
+
+  .panel-card {
+    background: var(--panel-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+    padding: 30px 28px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .headline {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  .auth-form {
+    margin-top: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    background: #f8fafc;
+    font-size: 14px;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.5);
+  }
+
+  .remember-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .primary-button {
+    padding: 11px 22px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    background: linear-gradient(120deg, #6366f1, #06b6d4);
+    color: white;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .primary-button:hover {
+    opacity: 0.95;
+  }
+
+  .auth-footer {
+    margin-top: 18px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .auth-footer a {
+    color: var(--accent-main);
+    font-weight: 600;
+    text-decoration: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="panel-card">
+    <div class="eyebrow">Welcome back</div>
+    <div class="headline">Log in to Life Metrics</div>
+
+    <form class="auth-form" method="post" action="{{ url_for('login') }}">
+      <div>
+        <label class="field-label" for="email">Email</label>
+        <input class="input" id="email" name="email" type="email" required />
+      </div>
+      <div>
+        <label class="field-label" for="password">Password</label>
+        <input class="input" id="password" name="password" type="password" required />
+      </div>
+      <label class="remember-row">
+        <input type="checkbox" name="remember" />
+        Remember me
+      </label>
+      <button type="submit" class="primary-button">Log in</button>
+    </form>
+
+    <div class="auth-footer">
+      Don't have an account? <a href="{{ url_for('register') }}">Sign up</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -3,17 +3,45 @@ app.py
 
 This file serves as the main Flask application for the Life Metrics project.
 It is responsible for handling all web-related behavior, including routing
-HTTP requests, managing user session state, and rendering HTML templates.
+HTTP requests, managing user accounts and session state, and rendering HTML
+templates.
 
 The core simulation logic (such as metric updates, decision effects, and
 recursive trend analysis) is intentionally separated into simulation.py.
 This separation helps keep the code organized and readable by isolating
-program logic from user interface and routing concerns.
+program logic from user interface and routing concerns. Persistence (user
+accounts, runs, and check-ins) lives in models.py.
 
 """
+import json
+import os
+
+# Load variables from a local .env file (e.g. DATABASE_URL, SECRET_KEY)
+# when running outside of a platform that injects them directly.
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Import Flask and utilities for handling requests, redirects, templates,
-# and sessions
-from flask import Flask, render_template, request, redirect, url_for, session
+# sessions, and flash messages
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+)
+
+# Import Flask-Login for authenticated user sessions
+from flask_login import (
+    LoginManager,
+    login_user,
+    logout_user,
+    login_required,
+    current_user,
+)
 
 # Import all simulation logic from the simulation module
 from simulation import (
@@ -26,55 +54,185 @@ from simulation import (
     recursive_metric_trend,
 )
 
-# Import the SQLite persistence layer for runs and check-ins
-import db
+# Import the SQLAlchemy persistence layer for users, runs, and check-ins
+from models import (
+    db,
+    User,
+    create_run,
+    insert_check_in,
+    get_check_ins_for_run,
+    get_runs_for_user,
+    get_owned_run,
+)
 
 # Create the Flask application instance
 app = Flask(__name__)
 
-# Set a secret key so Flask sessions can be securely signed
-app.secret_key = "life-metrics-secret-key"
+# Set a secret key so Flask sessions can be securely signed. In production
+# this must come from the SECRET_KEY environment variable.
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
 
-# Ensure the SQLite tables exist before handling any requests
-db.init_db()
+# Resolve the database connection string: use DATABASE_URL when provided
+# (e.g. Postgres on Render), otherwise fall back to a local SQLite file.
+_database_url = os.environ.get("DATABASE_URL")
+if not _database_url:
+    _database_url = "sqlite:///" + os.path.join(
+        os.path.dirname(__file__), "life_metrics.db"
+    )
+elif _database_url.startswith("postgres://"):
+    # SQLAlchemy/psycopg2 require the "postgresql://" scheme, but some
+    # platforms (including Render) still hand out "postgres://" URLs.
+    _database_url = _database_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = _database_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Wire SQLAlchemy into this app and ensure tables exist
+db.init_app(app)
+with app.app_context():
+    db.create_all()
+
+# Configure Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Look up a User by id for Flask-Login's session handling."""
+    return db.session.get(User, int(user_id))
+
+
+# Session keys used to hold live simulation state. Flask-Login stores its
+# own auth keys (e.g. "_user_id") in this same session cookie, so clearing
+# simulation state must only remove these keys rather than calling
+# session.clear(), which would also log the user out.
+_SIMULATION_SESSION_KEYS = (
+    "run_id",
+    "mode",
+    "metrics",
+    "actions",
+    "day",
+    "moment_index",
+    "log",
+    "custom_metrics",
+)
+
+
+def _clear_simulation_session():
+    """Remove only the simulation-related keys from the session."""
+    for key in _SIMULATION_SESSION_KEYS:
+        session.pop(key, None)
 
 
 @app.route("/")
 def index():
     """
-    Display the landing page where the user selects a simulation mode.
-
-    This function handles requests to the root URL ("/") and renders the
-    main menu of the application. From this page, the user can choose to
-    start a Student Life simulation, a Professional Life simulation, or
-    create a Custom Life simulation.
-
-    Args:
-        None
+    Display the marketing landing page, or send signed-in users straight
+    to their dashboard.
 
     Returns:
-        Response: A rendered HTML response for the index.html template,
-        which displays the main menu and mode selection buttons.
-
-    Examples:
-        Normal case:
-            - A user navigates to "http://127.0.0.1:5000/" and sees the
-              main menu with options for Student, Professional, and Custom modes.
-
-        Edge case 1:
-            - A user returns to "/" after resetting the simulation, and
-              the menu is shown again with no session data required.
-
-        Edge case 2:
-            - A user directly visits "/" without any active session, and
-              the page still loads correctly since this route does not
-              depend on session state.
+        Response: A redirect to "/dashboard" if the visitor is already
+        logged in, otherwise a rendered landing.html response.
     """
-    # Render and return the main menu page
-    return render_template("index.html")
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard"))
+    return render_template("landing.html")
+
+
+@app.route("/modes")
+@login_required
+def modes():
+    """
+    Display the simulation mode picker (Student, Professional, Custom).
+
+    Returns:
+        Response: A rendered HTML response for the modes.html template.
+    """
+    return render_template("modes.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """
+    Display and process the account registration form.
+
+    Validates that the email is not already registered and that the
+    password and confirmation match, hashes the password, creates the
+    user, logs them in, and redirects to the dashboard.
+
+    Returns:
+        Response: A rendered register.html response, or a redirect to
+        "/dashboard" once registration succeeds.
+    """
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard"))
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not email or not password:
+            flash("Email and password are required.")
+        elif password != confirm_password:
+            flash("Passwords do not match.")
+        elif User.query.filter_by(email=email).first():
+            flash("An account with that email already exists.")
+        else:
+            user = User(email=email)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+            return redirect(url_for("dashboard"))
+
+    return render_template("register.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """
+    Display and process the login form.
+
+    Returns:
+        Response: A rendered login.html response, or a redirect to
+        "/dashboard" once authentication succeeds.
+    """
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard"))
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        remember = bool(request.form.get("remember"))
+
+        user = User.query.filter_by(email=email).first()
+        if user and user.check_password(password):
+            login_user(user, remember=remember)
+            return redirect(url_for("dashboard"))
+
+        flash("Invalid email or password.")
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    """
+    Log the current user out and return them to the landing page.
+
+    Returns:
+        Response: A redirect to "/".
+    """
+    logout_user()
+    return redirect(url_for("index"))
 
 
 @app.route("/start", methods=["GET", "POST"])
+@login_required
 def start():
     """
     Initialize a built-in simulation for either the Student or Professional mode.
@@ -82,7 +240,7 @@ def start():
     This route is responsible for starting a new simulation using one of the
     predefined profiles. It supports both GET requests (using a query
     parameter in the URL) and POST requests (using form data submitted
-    from the landing page).
+    from the mode picker).
 
     Once a valid profile is selected, this function initializes all required
     session state, including metrics, available actions, the current day,
@@ -94,24 +252,24 @@ def start():
 
     Returns:
         Response: A redirect response to the "/simulate" route if a valid
-        profile is provided, or a redirect back to the index page if the
+        profile is provided, or a redirect back to the mode picker if the
         profile is invalid or missing.
 
     Examples:
         Normal case:
-            - A user clicks "Student Life" on the main menu, which sends
+            - A user clicks "Student Life" on the mode picker, which sends
               a request to "/start?profile=student". The simulation is
               initialized and the user is redirected to the simulation page.
 
         Edge case 1:
             - A user manually navigates to "/start" without providing a
               profile parameter. Since no valid profile is found, the user
-              is redirected back to the main menu.
+              is redirected back to the mode picker.
 
         Edge case 2:
             - A user provides an invalid profile value (e.g., "/start?profile=unknown").
               The function safely detects that the profile does not exist
-              and redirects the user to the index page instead of crashing.
+              and redirects the user to the mode picker instead of crashing.
     """
 
     # Attempt to read the selected profile from the URL or submitted form
@@ -119,18 +277,18 @@ def start():
 
     # Verify that the requested profile exists
     if profile_key not in PROFILES:
-        # Redirect to the menu if the profile is invalid
-        return redirect(url_for("index"))
+        # Redirect to the mode picker if the profile is invalid
+        return redirect(url_for("modes"))
 
     # Initialize the selected profile using core simulation logic
     mode, metrics, actions = start_profile(profile_key)
 
-    # Clear any previous session data
-    session.clear()
+    # Clear any previous simulation session data (without touching login state)
+    _clear_simulation_session()
 
     # Create a persistent run record so this simulation's history survives
     # across sessions, and remember its id for logging check-ins later
-    session["run_id"] = db.create_run(mode, None)
+    session["run_id"] = create_run(current_user.id, mode, None)
 
     # Store simulation state in the session
     session["mode"] = mode
@@ -149,6 +307,7 @@ def start():
 
 
 @app.route("/custom_setup", methods=["GET", "POST"])
+@login_required
 def custom_setup():
     """
     Display and process the setup form for a custom life simulation.
@@ -232,11 +391,15 @@ def custom_setup():
             tough_desc,
         )
 
-        # Clear any existing session data
-        session.clear()
+        # Clear any existing simulation session data (without touching login state)
+        _clear_simulation_session()
 
-        # Create a persistent run record for this custom simulation
-        session["run_id"] = db.create_run(mode, clean_metric_names)
+        # Create a persistent run record for this custom simulation. The
+        # custom action labels/descriptions are stored too so this run can
+        # be fully reconstructed later from the dashboard's "Continue" link.
+        session["run_id"] = create_run(
+            current_user.id, mode, clean_metric_names, actions
+        )
 
         # Store custom simulation state
         session["mode"] = mode
@@ -255,6 +418,7 @@ def custom_setup():
 
 
 @app.route("/simulate", methods=["GET", "POST"])
+@login_required
 def simulate():
     """
     Run and display the main simulation loop for all modes
@@ -287,7 +451,7 @@ def simulate():
         Edge case 1:
             - A user accesses "/simulate" without an active session
               (for example, after a browser refresh). The function
-              safely redirects the user back to the main menu.
+              safely redirects the user back to the mode picker.
 
         Edge case 2:
             - A user completes the Evening check-in for a day. The
@@ -298,9 +462,9 @@ def simulate():
     # Read the active simulation mode from the session
     mode = session.get("mode")
 
-    # Redirect to menu if no simulation is active
+    # Redirect to the mode picker if no simulation is active
     if not mode:
-        return redirect(url_for("index"))
+        return redirect(url_for("modes"))
 
     # Load current simulation state from the session
     metrics = session.get("metrics", {})
@@ -343,10 +507,10 @@ def simulate():
         session["day"] = new_day
         session["moment_index"] = new_moment_index
 
-        # Persist this check-in to SQLite so it survives across sessions
+        # Persist this check-in to the database so it survives across sessions
         run_id = session.get("run_id")
         if run_id and len(log_entries) > entries_before:
-            db.insert_check_in(run_id, action_id, log_entries[-1])
+            insert_check_in(run_id, action_id, log_entries[-1])
 
         # Redirect to avoid duplicate form submissions
         return redirect(url_for("simulate"))
@@ -396,22 +560,23 @@ def simulate():
 
 
 @app.route("/trends")
+@login_required
 def trends():
     """
     Display a line-chart dashboard of how each metric has changed over
     time for the currently active run.
 
-    This route reads every check-in stored in SQLite for the run tied to
-    the current session, builds one labeled value series per metric, and
-    hands that data to the trends template for client-side charting with
-    Chart.js.
+    This route reads every check-in stored in the database for the run
+    tied to the current session, builds one labeled value series per
+    metric, and hands that data to the trends template for client-side
+    charting with Chart.js.
 
     Args:
         None
 
     Returns:
         Response: A rendered HTML response for the trends.html template
-        when a run is active, or a redirect to the index page if there
+        when a run is active, or a redirect to the mode picker if there
         is no active run (e.g. after a reset or before starting).
 
     Examples:
@@ -425,19 +590,19 @@ def trends():
 
         Edge case 2:
             - A user visits "/trends" without an active session (no
-              run_id). They are redirected back to the main menu.
+              run_id). They are redirected back to the mode picker.
     """
 
     # Read the active run and mode from the session
     run_id = session.get("run_id")
     mode = session.get("mode")
 
-    # Redirect to the menu if there is no active run to chart
+    # Redirect to the mode picker if there is no active run to chart
     if not run_id or not mode:
-        return redirect(url_for("index"))
+        return redirect(url_for("modes"))
 
-    # Fetch every check-in logged so far for this run from SQLite
-    check_ins = db.get_check_ins_for_run(run_id)
+    # Fetch every check-in logged so far for this run from the database
+    check_ins = get_check_ins_for_run(run_id)
 
     # Build one series per metric: a list of labels and a list of values
     series: dict[str, dict[str, list]] = {}
@@ -461,10 +626,148 @@ def trends():
     )
 
 
+def _build_actions_and_baseline(run):
+    """
+    Determine the actions list and starting-metric baseline for a run.
+
+    Built-in modes look these up from PROFILES; custom mode reconstructs
+    them from the run's stored custom_metric_names/custom_actions columns.
+
+    Args:
+        run (Run): The run to build actions/baseline for.
+
+    Returns:
+        Tuple[list, dict, list | None]: (actions, baseline_metrics,
+        custom_metric_names). custom_metric_names is None for built-in modes.
+    """
+    if run.mode in PROFILES:
+        return (
+            PROFILES[run.mode]["actions"],
+            PROFILES[run.mode]["metrics"],
+            None,
+        )
+
+    custom_metric_names = (
+        json.loads(run.custom_metric_names) if run.custom_metric_names else []
+    )
+    custom_actions = json.loads(run.custom_actions) if run.custom_actions else []
+    baseline_metrics = {name: 70 for name in custom_metric_names}
+    return custom_actions, baseline_metrics, custom_metric_names
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    """
+    Display every run the current user has started, newest first.
+
+    Returns:
+        Response: A rendered dashboard.html response listing each run
+        with its mode, start date, and check-in count, or an empty-state
+        prompt to choose a mode if the user has no runs yet.
+    """
+    runs = get_runs_for_user(current_user.id)
+    run_summaries = [
+        {
+            "id": run.id,
+            "mode": run.mode,
+            "created_at": run.created_at,
+            "check_in_count": len(get_check_ins_for_run(run.id)),
+        }
+        for run in runs
+    ]
+    return render_template("dashboard.html", runs=run_summaries)
+
+
+@app.route("/dashboard/continue/<int:run_id>")
+@login_required
+def dashboard_continue(run_id):
+    """
+    Reconstruct a past run's live simulation state into the session and
+    resume it on the "/simulate" page.
+
+    Args:
+        run_id (int): The run to resume.
+
+    Returns:
+        Response: A redirect to "/simulate" with the run's state loaded
+        into the session, or to "/dashboard" if the run does not exist
+        or does not belong to the current user.
+    """
+    run = get_owned_run(run_id, current_user.id)
+    if run is None:
+        return redirect(url_for("dashboard"))
+
+    actions, baseline_metrics, custom_metric_names = _build_actions_and_baseline(run)
+    check_ins = get_check_ins_for_run(run.id)
+
+    if check_ins:
+        last = check_ins[-1]
+        metrics = dict(last["metrics"])
+        if last["moment_index"] < len(TIME_SLOTS):
+            day, moment_index = last["day"], last["moment_index"]
+        else:
+            day, moment_index = last["day"] + 1, 0
+        log_entries = [
+            {
+                "day": entry["day"],
+                "moment": entry["moment_index"],
+                "time_label": entry["time_label"],
+                "action_label": entry["action_label"],
+                "snapshot": entry["metrics"],
+                "note": entry["note"],
+            }
+            for entry in check_ins
+        ]
+    else:
+        metrics = dict(baseline_metrics)
+        day, moment_index = 1, 0
+        log_entries = []
+
+    _clear_simulation_session()
+    session["run_id"] = run.id
+    session["mode"] = run.mode
+    session["metrics"] = metrics
+    session["actions"] = actions
+    session["day"] = day
+    session["moment_index"] = moment_index
+    session["log"] = log_entries
+    if custom_metric_names:
+        session["custom_metrics"] = custom_metric_names
+
+    return redirect(url_for("simulate"))
+
+
+@app.route("/dashboard/trends/<int:run_id>")
+@login_required
+def dashboard_trends(run_id):
+    """
+    Point the session at a past run so "/trends" can chart it.
+
+    Args:
+        run_id (int): The run to view trends for.
+
+    Returns:
+        Response: A redirect to "/trends", or to "/dashboard" if the run
+        does not exist or does not belong to the current user.
+    """
+    run = get_owned_run(run_id, current_user.id)
+    if run is None:
+        return redirect(url_for("dashboard"))
+
+    session["run_id"] = run.id
+    session["mode"] = run.mode
+    if run.custom_metric_names:
+        session["custom_metrics"] = json.loads(run.custom_metric_names)
+
+    return redirect(url_for("trends"))
+
+
 @app.route("/reset")
 def reset():
     """
-    Clear the current simulation state and return the user to the main menu.
+    Clear the current simulation state and return the user to the
+    mode picker (or landing page, if logged out).
 
     This route removes all stored session data related to the active
     simulation, including metrics, logs, and progress. It allows the
@@ -475,13 +778,13 @@ def reset():
         None
 
     Returns:
-        Response: A redirect response to the index ("/") route,
-        where the user can select a new simulation mode.
+        Response: A redirect response to the mode picker if logged in,
+        otherwise to the landing page.
 
     Examples:
         Normal case:
             - A user clicks a "Back to Menu" or "Reset" button during
-              a simulation and is returned to the main menu with a
+              a simulation and is returned to the mode picker with a
               fresh session.
 
         Edge case 1:
@@ -491,14 +794,16 @@ def reset():
 
         Edge case 2:
             - A user refreshes the page after calling "/reset".
-              The session remains empty and the menu page is shown
+              The session remains empty and the mode picker is shown
               without any unexpected behavior.
     """
 
-    # Clear all session data
-    session.clear()
+    # Clear simulation session data (without touching login state)
+    _clear_simulation_session()
 
-    # Redirect back to the landing page
+    # Redirect back to the mode picker if logged in, else the landing page
+    if current_user.is_authenticated:
+        return redirect(url_for("modes"))
     return redirect(url_for("index"))
 
 
